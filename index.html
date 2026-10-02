@@ -123,7 +123,7 @@
           </div>
 
           <div class="bg-[#0f0c18] p-4 rounded-2xl border border-white/5">
-            <audio id="main-audio-player" class="hidden"></audio>
+            <audio id="main-audio-player" preload="auto" class="hidden"></audio>
             
             <div class="mb-3">
               <input type="range" id="audio-seek" value="0" max="100" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500">
@@ -175,24 +175,19 @@
   </footer>
 
   <!-- MODALS -->
-
-  <!-- Wordle Victory Modal -->
   <div id="wordle-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
     <div class="bg-[#181428] border border-pink-500/30 rounded-3xl p-6 max-w-lg w-full text-center relative shadow-2xl max-h-[90vh] flex flex-col">
       <div class="w-14 h-14 bg-pink-500/20 text-pink-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl border border-pink-500/40 flex-shrink-0">
         <i class="fa-solid fa-heart-circle-check"></i>
       </div>
       <h3 class="text-2xl font-extrabold text-white mb-2 flex-shrink-0">you found the word!</h3>
-      
       <div class="p-5 bg-pink-500/10 rounded-2xl border border-pink-500/20 mb-5 text-pink-100 text-xs sm:text-sm leading-relaxed text-left space-y-3 overflow-y-auto custom-scrollbar flex-grow" id="wordle-message-text"></div>
-      
       <button onclick="closeModal('wordle-modal')" class="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold hover:opacity-90 transition flex-shrink-0">
         keep playing arcade
       </button>
     </div>
   </div>
 
-  <!-- Coupon Screenshot Modal -->
   <div id="coupon-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
     <div class="bg-[#181428] border border-purple-500/30 rounded-3xl p-6 max-w-md w-full text-center relative shadow-2xl">
       <div class="w-16 h-16 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl border border-purple-500/40">
@@ -212,7 +207,6 @@
 
   <!-- JAVASCRIPT -->
   <script>
-    /* WORDLE CONFIGURATION */
     const WORDLE_WORD = 'LOVER';
     const WORDLE_MESSAGE = `
       <p>to someone who isn’t romantically in love, the word "lover" is just a simple definition. it sounds like a word from a book or a casual label for a relationship. they think it just means two people who hang out, share an attraction, or spend time together. to them, it is a concept they see from the outside—something ordinary.</p>
@@ -224,7 +218,6 @@
     let wordleGuesses = [];
     let wordleGameOver = false;
 
-    /* COUPONS CONFIGURATION */
     const COUPONS_DATA = [
       { id: 1, title: 'make up set', desc: 'valid only today ! pick anything you like' },
       { id: 2, title: 'unli food', desc: 'valid only today ! pick anything you like' },
@@ -232,13 +225,13 @@
     ];
     let redeemedCouponId = null;
 
-    /* SPOTIFY STYLE PLAYLIST */
+    /* UPDATED PLAYLIST CONFIGURATION */
     const PLAYLIST_DATA = [
       {
         id: 0,
         title: "mahal magmahal",
         artist: "esremborak",
-        audioUrl: "./song1.mp3",
+        audioUrl: "song1.mp3",
         cover: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300",
         memory: "im dedicating this to show you that no matter how heavy or chaotic life gets, loving you is the easiest and most beautiful choice i make every single day"
       },
@@ -246,7 +239,7 @@
         id: 1,
         title: "got me tangled",
         artist: "arthur nery",
-        audioUrl: "./song2.mp3",
+        audioUrl: "song2.mp3",
         cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300",
         memory: "this is my way of telling you that you still have my undivided attention and i am happily caught up in you and everything you are"
       },
@@ -254,7 +247,7 @@
         id: 2,
         title: "sure thing",
         artist: "miguel",
-        audioUrl: "./song3.mp3",
+        audioUrl: "song3.mp3",
         cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
         memory: "i give you this song as a promise of stability; no matter what doubts or storms come our way, my love for you is a guarantee, and i will always be your safe space"
       }
@@ -281,7 +274,6 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    /* WORDLE FUNCTIONS */
     function initWordle() {
       const grid = document.getElementById('wordle-grid');
       grid.innerHTML = '';
@@ -382,7 +374,6 @@
       initWordle();
     }
 
-    /* COUPON FUNCTIONS */
     function initCoupons() {
       const container = document.getElementById('coupons-grid');
       container.innerHTML = '';
@@ -421,8 +412,7 @@
       initCoupons();
     }
 
-    /* PLAYLIST FUNCTIONS */
-    function initPlaylist() {
+    function renderPlaylistUI() {
       const container = document.getElementById('playlist-container');
       container.innerHTML = '';
 
@@ -444,8 +434,6 @@
         `;
         container.appendChild(item);
       });
-
-      loadTrack(0, false);
     }
 
     function loadTrack(index, autoPlay = true) {
@@ -460,13 +448,21 @@
       audioPlayer.src = track.audioUrl;
 
       if (autoPlay) {
-        audioPlayer.play().catch(e => console.log('playback blocked or failed', e));
-        isPlaying = true;
+        audioPlayer.play().then(() => {
+          isPlaying = true;
+          updatePlayBtn();
+          renderPlaylistUI();
+        }).catch(e => {
+          console.warn('Playback error:', e);
+          isPlaying = false;
+          updatePlayBtn();
+          renderPlaylistUI();
+        });
       } else {
         isPlaying = false;
+        updatePlayBtn();
+        renderPlaylistUI();
       }
-      updatePlayBtn();
-      initPlaylist();
     }
 
     function togglePlay() {
@@ -474,10 +470,12 @@
         audioPlayer.pause();
         isPlaying = false;
       } else {
-        audioPlayer.play().catch(e => console.log('playback blocked or failed', e));
-        isPlaying = true;
+        audioPlayer.play().then(() => {
+          isPlaying = true;
+        }).catch(e => console.warn('Playback blocked:', e));
       }
       updatePlayBtn();
+      renderPlaylistUI();
     }
 
     function updatePlayBtn() {
@@ -519,7 +517,8 @@
     window.onload = () => {
       initWordle();
       initCoupons();
-      initPlaylist();
+      renderPlaylistUI();
+      loadTrack(0, false);
     };
   </script>
 </body>
